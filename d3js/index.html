@@ -7,14 +7,11 @@
 
 <!-- Create a div where the graph will take place -->
 <div id="plot_div"></div>
-<script>
-
-    function transpose(array) {
-        return array[0].map((_, colIndex) => array.map(row => row[colIndex]));
-    }
+<script type="module">
+    import { zoom } from "https://cdn.skypack.dev/d3-zoom@3";
 
     async function get_data(server_url, product, start_time, stop_time) {
-        const json_from_server = await d3.json(server_url + '/get_data?format=json&path=' + product + '&start_time=' + start_time + '&stop_time=' + stop_time);
+        const json_from_server = await d3.json(server_url + '/get_data?format=json&path=' + product + '&start_time=' + start_time + '&stop_time=' + stop_time, { crossOrigin: "anonymous" });
         const values = json_from_server['values']['values'];
         const time = json_from_server['axes'][0]['values'].map(function (item) { return item / 1000000 });
         return [time, values];
@@ -36,7 +33,7 @@
         svg.append("g").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x_axis));
 
         if (x.length > 0) {
-            colors = d3.scaleOrdinal(d3.schemeCategory10);
+            const colors = d3.scaleOrdinal(d3.schemeCategory10);
             for (let col = 0; col < y[0].length; col++) {
 
                 svg.append('path')
@@ -50,13 +47,15 @@
         }
     }
 
+
     var margin = { top: 10, right: 30, bottom: 50, left: 60 },
         width = window.innerWidth - margin.left - margin.right,
         height = window.innerHeight - margin.top - margin.bottom,
         server_url = "http://sciqlop.lpp.polytechnique.fr/cache",
         product = "amda/c1_b_gsm";
-    start_time = "2018-10-24T00:00:00";
-    stop_time = "2018-10-27T00:00:00";
+    const start_time = "2018-10-24T00:00:00";
+    const stop_time = "2018-10-27T00:00:00";
+
 
     var svg = d3.select("#plot_div")
         .append("svg")
@@ -70,5 +69,6 @@
         const [x, y] = await get_data(server_url, product, start_time, stop_time);
         line_plot(svg, x, y);
     })();
+
 
 </script>
