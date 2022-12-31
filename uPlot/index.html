@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Resize</title>
+    <title>Speasy proxy API demo with uPlot</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://leeoniya.github.io/uPlot/dist/uPlot.min.css">
 
@@ -22,13 +22,13 @@
             const json_from_server = JSON5.parse(await response.text())
             let data = transpose(json_from_server['values']['values']);
             data.unshift(json_from_server['axes'][0]['values'].map(function (item) { return item / 1000000000.0 }));
-            return data;
+            return { data: data, meta: json_from_server['values']["meta"], labels: json_from_server["columns"] };
         }
 
         function getSize() {
             return {
                 width: window.innerWidth - 100,
-                height: window.innerHeight - 200,
+                height: window.innerHeight - 200
             }
         }
 
@@ -42,40 +42,38 @@
         }
 
 
-        function line_plot(data) {
+        function line_plot(obj) {
+
             let opts = {
-                title: "My Chart",
+                title: "Speasy proxy API demo with uPlot",
                 ...getSize(),
                 tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'UTC'),
-                cursor: { drag: { x: true, y: true, uni: 50 } },
+                focus: {alpha:0.5,},
+                cursor: {
+                    drag: { x: true, y: true, uni: 100 },
+                    focus: {
+                        prox: 30,
+                    }
+                },
                 series: [
                     {},
-                    {
-                        show: true,
-                        spanGaps: false,
-                        label: "X",
-                        stroke: color(0),
-                        width: 1
-                    },
-                    {
-                        show: true,
-                        spanGaps: false,
-                        label: "Y",
-                        stroke: color(1),
-                        width: 1
-                    }
-                    ,
-                    {
-                        show: true,
-                        spanGaps: false,
-                        label: "Z",
-                        stroke: color(2),
-                        width: 1
-                    }
+                    ...function () {
+                        var opts = Array(obj.labels.length);
+                        for (let i = 0; i < obj.labels.length; i++) {
+                            opts[i] = {
+                                show: true,
+                                spanGaps: false,
+                                label: obj.labels[i],
+                                stroke: color(i),
+                                width: 1
+                            }
+                        }
+                        return opts;
+                    }()
                 ],
             };
 
-            let plot = new uPlot(opts, data, document.body);
+            let plot = new uPlot(opts, obj.data, document.body);
             window.addEventListener("resize", e => {
                 plot.setSize(getSize());
             });
