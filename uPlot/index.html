@@ -32,52 +32,44 @@
             }
         }
 
+        function color(i) {
+            const palette = ['rgb(31, 119, 180)', 'rgb(255, 127, 14)', 'rgb(44, 160, 44)', 'rgb(214, 39, 40)', 'rgb(148, 103, 189)', 'rgb(140, 86, 75)',
+                'rgb(227, 119, 194)', 'rgb(127, 127, 127)', 'rgb(188, 189, 34)', 'rgb(23, 190, 207)', 'rgb(31, 119, 180)', 'rgb(255, 127, 14)', 'rgb(44, 160, 44)', 'rgb(214, 39, 40)',
+                'rgb(148, 103, 189)', 'rgb(140, 86, 75)', 'rgb(227, 119, 194)', 'rgb(127, 127, 127)', 'rgb(188, 189, 34)', 'rgb(23, 190, 207)', 'rgb(31, 119, 180)', 'rgb(255, 127, 14)',
+                'rgb(44, 160, 44)', 'rgb(214, 39, 40)', 'rgb(148, 103, 189)', 'rgb(140, 86, 75)', 'rgb(227, 119, 194)', 'rgb(127, 127, 127)', 'rgb(188, 189, 34)', 'rgb(23, 190, 207)',
+                'rgb(31, 119, 180)', 'rgb(255, 127, 14)']
+            return palette[i % palette.length]
+        }
+
 
         function line_plot(data) {
             let opts = {
                 title: "My Chart",
                 ...getSize(),
                 tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'UTC'),
+                cursor: { drag: { x: true, y: true, uni: 50 } },
                 series: [
                     {},
                     {
-                        // initial toggled state (optional)
                         show: true,
-
                         spanGaps: false,
-
-                        // in-legend display
                         label: "X",
-
-                        // series style
-                        stroke: "red",
+                        stroke: color(0),
                         width: 1
                     },
                     {
-                        // initial toggled state (optional)
                         show: true,
-
                         spanGaps: false,
-
-                        // in-legend display
                         label: "Y",
-
-                        // series style
-                        stroke: "red",
+                        stroke: color(1),
                         width: 1
                     }
                     ,
                     {
-                        // initial toggled state (optional)
                         show: true,
-
                         spanGaps: false,
-
-                        // in-legend display
                         label: "Z",
-
-                        // series style
-                        stroke: "red",
+                        stroke: color(2),
                         width: 1
                     }
                 ],
@@ -93,9 +85,9 @@
         const start_time = "2018-10-24T00:00:00";
         const stop_time = "2018-10-25T02:05:00";
 
-        //(async () => {
+        (async () => {
             line_plot(await get_data(server_url, product, start_time, stop_time));
-       // })();
+        })();
 
 
     </script>
