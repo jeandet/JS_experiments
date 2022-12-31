@@ -21,7 +21,7 @@
             const response = await fetch(server_url + '/get_data?format=json&path=' + product + '&start_time=' + start_time + '&stop_time=' + stop_time);
             const json_from_server = JSON5.parse(await response.text())
             let data = transpose(json_from_server['values']['values']);
-            data.unshift(json_from_server['axes'][0]['values'].map(function (item) { return item / 1000000.0 }));
+            data.unshift(json_from_server['axes'][0]['values'].map(function (item) { return item / 1000000000.0 }));
             return data;
         }
 
@@ -89,7 +89,7 @@
         }
         const server_url = "http://sciqlop.lpp.polytechnique.fr/cache",
             product = "amda/c1_b_gsm";
-        const start_time = "2018-10-24T02:00:00";
+        const start_time = "2018-10-24T01:00:00";
         const stop_time = "2018-10-25T02:05:00";
 
         //(async () => {
