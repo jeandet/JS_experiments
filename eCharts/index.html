@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Speasy proxy API demo with uPlot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://leeoniya.github.io/uPlot/dist/uPlot.min.css">
+
+</head>
+
+<body>
+    <script src="https://fastly.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+
+    <div id="chart" style="width: 1920px; height: 600px;"></div>
+    <script type="module">
+        import JSON5 from 'https://unpkg.com/json5@2/dist/index.min.mjs';
+        function transpose(array) {
+            return array[0].map((_, colIndex) => array.map(row => row[colIndex]));
+        }
+
+        async function get_data(server_url, product, start_time, stop_time) {
+            const response = await fetch(`${server_url}/get_data?format=json&path=${product}&start_time=${start_time}&stop_time=${stop_time}`);
+            const json_from_server = JSON5.parse(await response.text())
+            let data = transpose(json_from_server['values']['values']);
+            data.unshift(json_from_server['axes'][0]['values'].map(function (item) { return item / 1000000.0 }));
+            return { data: data, meta: json_from_server['values']["meta"], labels: json_from_server["columns"] };
+        }
+
+        function getSize() {
+            return {
+                width: window.innerWidth - 100,
+                height: window.innerHeight - 200
+            }
+        }
+
+        function color(i) {
+            const palette = ['rgb(31, 119, 180)', 'rgb(255, 127, 14)', 'rgb(44, 160, 44)', 'rgb(214, 39, 40)', 'rgb(148, 103, 189)', 'rgb(140, 86, 75)',
+                'rgb(227, 119, 194)', 'rgb(127, 127, 127)', 'rgb(188, 189, 34)', 'rgb(23, 190, 207)', 'rgb(31, 119, 180)', 'rgb(255, 127, 14)', 'rgb(44, 160, 44)', 'rgb(214, 39, 40)',
+                'rgb(148, 103, 189)', 'rgb(140, 86, 75)', 'rgb(227, 119, 194)', 'rgb(127, 127, 127)', 'rgb(188, 189, 34)', 'rgb(23, 190, 207)', 'rgb(31, 119, 180)', 'rgb(255, 127, 14)',
+                'rgb(44, 160, 44)', 'rgb(214, 39, 40)', 'rgb(148, 103, 189)', 'rgb(140, 86, 75)', 'rgb(227, 119, 194)', 'rgb(127, 127, 127)', 'rgb(188, 189, 34)', 'rgb(23, 190, 207)',
+                'rgb(31, 119, 180)', 'rgb(255, 127, 14)']
+            return palette[i % palette.length]
+        }
+
+
+        function line_plot(obj) {
+            let dom = document.getElementById("chart");
+
+            let myChart = echarts.init(dom, null, {
+                width: 1920,
+                height: 600
+            });
+
+            let opts = {
+                animation: false,
+                useUTC: true,
+                dataset: {
+                    source: obj.data,
+                    dimensions: ["date", ...obj.labels]
+                },
+                tooltip: {
+                    trigger: "axis"
+                },
+                legend: {},
+                grid: {
+                    containLabel: true,
+                    left: 0,
+                    top: 50,
+                    right: 0,
+                    bottom: 30
+                },
+                xAxis: {
+                    type: "time",
+                    formatter: function (value) {
+                        return echarts.format.formatTime('yyyy-MM-dd hh:mm:ss', value, true);
+                    },
+                },
+                yAxis: [
+                    {
+                        type: "value"
+                    }
+                ],
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        start: 0,
+                        end: 100
+                    },
+                    {
+                        start: 0,
+                        end: 100
+                    }
+                ],
+                series: [
+                    ...function () {
+                        var opts = Array(obj.labels.length);
+                        for (let i = 0; i < obj.labels.length; i++) {
+                            opts[i] = {
+                                name: obj.labels[i],
+                                z: 0,
+                                type: "line",
+                                showSymbol: false,
+                                seriesLayoutBy: 'row',
+                                sampling: "lttb",
+                                lineStyle: { width: 1 },
+                                emphasis: { lineStyle: { width: 1 } },
+                                encode: {
+                                    x: "date",
+                                    y: obj.labels[i]
+                                }
+                            }
+                        }
+                        return opts;
+                    }()
+                ]
+            };
+
+            myChart.setOption(opts, {
+                notMerge: true
+            });
+            return myChart;
+
+        }
+        const server_url = "http://sciqlop.lpp.polytechnique.fr/cache",
+            product = "amda/c1_b_gsm";
+        const start_time = "2018-10-24T00:00:00";
+        const stop_time = "2018-10-25T02:05:00";
+
+        (async () => {
+            line_plot(await get_data(server_url, product, start_time, stop_time));
+        })();
+
+
+    </script>
+</body>
+
+</html>

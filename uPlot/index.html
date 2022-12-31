@@ -18,7 +18,7 @@
         }
 
         async function get_data(server_url, product, start_time, stop_time) {
-            const response = await fetch(server_url + '/get_data?format=json&path=' + product + '&start_time=' + start_time + '&stop_time=' + stop_time);
+            const response = await fetch(`${server_url}/get_data?format=json&path=${product}&start_time=${start_time}&stop_time=${stop_time}`);
             const json_from_server = JSON5.parse(await response.text())
             let data = transpose(json_from_server['values']['values']);
             data.unshift(json_from_server['axes'][0]['values'].map(function (item) { return item / 1000000000.0 }));
@@ -41,6 +41,81 @@
             return palette[i % palette.length]
         }
 
+        function wheelPanPlugin() {
+
+            let xMin, xMax, yMin, yMax, xRange, yRange;
+
+            return {
+                hooks: {
+                    ready: u => {
+                        xMin = u.scales.x.min;
+                        xMax = u.scales.x.max;
+                        yMin = u.scales.y.min;
+                        yMax = u.scales.y.max;
+
+                        xRange = xMax - xMin;
+                        yRange = yMax - yMin;
+
+                        let over = u.over;
+                        let rect = over.getBoundingClientRect();
+
+                        // wheel drag pan
+                        over.addEventListener("mousedown", e => {
+                            if (e.button == 1) {
+                                //	plot.style.cursor = "move";
+                                e.preventDefault();
+
+                                let left0 = e.clientX;
+                                //	let top0 = e.clientY;
+
+                                let scXMin0 = u.scales.x.min;
+                                let scXMax0 = u.scales.x.max;
+
+                                let xUnitsPerPx = u.posToVal(1, 'x') - u.posToVal(0, 'x');
+
+                                function onmove(e) {
+                                    e.preventDefault();
+
+                                    let left1 = e.clientX;
+                                    //	let top1 = e.clientY;
+
+                                    let dx = xUnitsPerPx * (left1 - left0);
+
+                                    u.setScale('x', {
+                                        min: scXMin0 - dx,
+                                        max: scXMax0 - dx,
+                                    });
+                                }
+
+                                function onup(e) {
+                                    document.removeEventListener("mousemove", onmove);
+                                    document.removeEventListener("mouseup", onup);
+                                }
+
+                                document.addEventListener("mousemove", onmove);
+                                document.addEventListener("mouseup", onup);
+                            }
+                        });
+
+                        // wheel scroll zoom
+                        over.addEventListener("wheel", e => {
+                            e.preventDefault();
+
+                            let oxRange = u.scales.x.max - u.scales.x.min;
+                            const xMin = u.scales.x.min + (e.deltaY / 360 * 0.3 * oxRange);
+                            const xMax = u.scales.x.max + (e.deltaY / 360 * 0.3 * oxRange);
+                            u.batch(() => {
+                                u.setScale("x", {
+                                    min: xMin,
+                                    max: xMax,
+                                });
+                            });
+                        });
+                    }
+                }
+            };
+        }
+
 
         function line_plot(obj) {
 
@@ -48,7 +123,7 @@
                 title: "Speasy proxy API demo with uPlot",
                 ...getSize(),
                 tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'UTC'),
-                focus: {alpha:0.5,},
+                focus: { alpha: 0.5, },
                 cursor: {
                     drag: { x: true, y: true, uni: 100 },
                     focus: {
@@ -57,7 +132,7 @@
                 },
                 series: [
                     {},
-                    ...function () {
+                    ...function(){
                         var opts = Array(obj.labels.length);
                         for (let i = 0; i < obj.labels.length; i++) {
                             opts[i] = {
@@ -69,7 +144,22 @@
                             }
                         }
                         return opts;
-                    }()
+                    }(),
+                ],
+                axes: [
+                    {
+                    },
+                    {
+                        space: 50,
+                        side: 3,
+                        label: `(${obj.meta['UNITS']})`,
+                        labelGap: 8,
+                        labelSize: 8 + 12 + 8,
+                        stroke: "red",
+                    }
+                ],
+                plugins: [
+                    wheelPanPlugin()
                 ],
             };
 
