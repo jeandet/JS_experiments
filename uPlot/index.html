@@ -37,6 +37,7 @@
             let opts = {
                 title: "My Chart",
                 ...getSize(),
+                tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'UTC'),
                 series: [
                     {},
                     {
@@ -89,7 +90,7 @@
         }
         const server_url = "http://sciqlop.lpp.polytechnique.fr/cache",
             product = "amda/c1_b_gsm";
-        const start_time = "2018-10-24T01:00:00";
+        const start_time = "2018-10-24T00:00:00";
         const stop_time = "2018-10-25T02:05:00";
 
         //(async () => {
