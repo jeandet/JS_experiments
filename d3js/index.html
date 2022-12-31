@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-fetch@3"></script>
+
+<!-- Create a div where the graph will take place -->
+<div id="plot_div"></div>
+<script>
+
+    function transpose(array) {
+        return array[0].map((_, colIndex) => array.map(row => row[colIndex]));
+    }
+
+    async function get_data(server_url, product, start_time, stop_time) {
+        const json_from_server = await d3.json(server_url + '/get_data?format=json&path=' + product + '&start_time=' + start_time + '&stop_time=' + stop_time);
+        const values = json_from_server['values']['values'];
+        const time = json_from_server['axes'][0]['values'].map(function (item) { return item / 1000000 });
+        return [time, values];
+    }
+
+    function line_plot(svg, x, y) {
+        var indexes = [...Array(x.length).keys()];
+        var y_axis = d3.scaleLinear()
+            .domain([d3.min(indexes, function (i) { return Math.min(...y[i]); }), d3.max(indexes, function (i) { return Math.max(...y[i]); })])
+            .range([height, 0]);
+
+        svg.append("g")
+            .call(d3.axisLeft(y_axis));
+
+        var x_axis = d3.scaleLinear()
+            .domain([0, x.length])
+            .range([0, width]);
+
+        svg.append("g").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x_axis));
+
+        if (x.length > 0) {
+            colors = d3.scaleOrdinal(d3.schemeCategory10);
+            for (let col = 0; col < y[0].length; col++) {
+
+                svg.append('path')
+                    .attr('d', d3.line()
+                        .curve(d3.curveBasis)
+                        .y(function (i) { return y_axis(y[i][col]) })
+                        .x(function (i) { return x_axis(i) })(indexes))
+                    .attr('stroke', colors(col))
+                    .attr('fill', 'none');
+            }
+        }
+    }
+
+    var margin = { top: 10, right: 30, bottom: 50, left: 60 },
+        width = window.innerWidth - margin.left - margin.right,
+        height = window.innerHeight - margin.top - margin.bottom,
+        server_url = "http://sciqlop.lpp.polytechnique.fr/cache",
+        product = "amda/c1_b_gsm";
+    start_time = "2018-10-24T00:00:00";
+    stop_time = "2018-10-27T00:00:00";
+
+    var svg = d3.select("#plot_div")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+    (async () => {
+        const [x, y] = await get_data(server_url, product, start_time, stop_time);
+        line_plot(svg, x, y);
+    })();
+
+</script>
