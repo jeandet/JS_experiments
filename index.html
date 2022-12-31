@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+<script src="https://unpkg.com/json5@2/dist/index.min.js"></script>
+
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+<script>
+    function transpose(array) {
+        return array[0].map((_, colIndex) => array.map(row => row[colIndex]));
+    }
+
+    var margin = { top: 10, right: 30, bottom: 30, left: 60 },
+        width = 460 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom,
+        server_url = "http://sciqlop.lpp.polytechnique.fr/cache",
+        product = "amda/c1_b_gsm";
+
+    //Read the data
+    jQuery.ajax({
+        type: 'GET',
+        url: server_url + '/get_data?format=json&path=' + product + '&start_time=2018-10-24T00:00:00' + '&stop_time=2018-10-24T14:00:00',
+        converters: {
+            'text json': function (result) {
+                return JSON5.parse(result);
+            }
+        },
+        success: function (json_from_server) {
+            // set the dimensions and margins of the graph
+
+            // append the svg object to the body of the page
+            var svg = d3.select("#my_dataviz")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+            var values = json_from_server['values']['values'];
+            var time = json_from_server['axes'][0]['values'].map(function (item) { return item / 1000000 });
+            var indexes = [...Array(time.length).keys()];
+            var y = d3.scaleLinear()
+                .domain([d3.min(indexes, function (i) { return Math.min(...values[i]); }), d3.max(indexes, function (i) { return Math.max(...values[i]); })])
+                .range([height, 0]);
+
+            svg.append("g")
+                .call(d3.axisLeft(y));
+
+            var x = d3.scaleLinear()
+                .domain([0, time.length])
+                .range([0, width]);
+
+            svg.append("g").attr("transform", "translate(0," + height + ")").call(d3.axisBottom(x));
+
+            if (values.length > 0) {
+                colors = d3.scaleOrdinal(d3.schemePaired);
+                var test = colors(1)
+                for (let col = 0; col < values[0].length; col++) {
+
+                    svg.append('path')
+                        .attr('d', d3.line()
+                            .curve(d3.curveBasis)
+                            .y(function (i) { return y(values[i][col]) })
+                            .x(function (i) { return x(i) })(indexes))
+                        .attr('stroke', "#000000")
+                        .attr('fill', 'none');
+                }
+            }
+
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            console.log(xhr);
+            console.log(ajaxOptions);
+            console.log(thrownError);
+        }
+    });
+
+</script>
