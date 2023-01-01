@@ -3,9 +3,8 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Speasy proxy API demo with uPlot</title>
+    <title>Speasy proxy API demo with ECharts</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://leeoniya.github.io/uPlot/dist/uPlot.min.css">
 
 </head>
 
@@ -34,16 +33,6 @@
             }
         }
 
-        function color(i) {
-            const palette = ['rgb(31, 119, 180)', 'rgb(255, 127, 14)', 'rgb(44, 160, 44)', 'rgb(214, 39, 40)', 'rgb(148, 103, 189)', 'rgb(140, 86, 75)',
-                'rgb(227, 119, 194)', 'rgb(127, 127, 127)', 'rgb(188, 189, 34)', 'rgb(23, 190, 207)', 'rgb(31, 119, 180)', 'rgb(255, 127, 14)', 'rgb(44, 160, 44)', 'rgb(214, 39, 40)',
-                'rgb(148, 103, 189)', 'rgb(140, 86, 75)', 'rgb(227, 119, 194)', 'rgb(127, 127, 127)', 'rgb(188, 189, 34)', 'rgb(23, 190, 207)', 'rgb(31, 119, 180)', 'rgb(255, 127, 14)',
-                'rgb(44, 160, 44)', 'rgb(214, 39, 40)', 'rgb(148, 103, 189)', 'rgb(140, 86, 75)', 'rgb(227, 119, 194)', 'rgb(127, 127, 127)', 'rgb(188, 189, 34)', 'rgb(23, 190, 207)',
-                'rgb(31, 119, 180)', 'rgb(255, 127, 14)']
-            return palette[i % palette.length]
-        }
-
-
         function line_plot(obj) {
             let dom = document.getElementById("chart");
 
@@ -60,7 +49,35 @@
                     dimensions: ["date", ...obj.labels]
                 },
                 tooltip: {
-                    trigger: "axis"
+                    trigger: "axis",
+                    axisPointer:
+                    {
+                        show: true,
+                        type: 'cross',
+                        snap: true
+                    },
+                    valueFormatter: (value) => `${value.toFixed(2)} ${obj.meta["UNITS"]}`
+                },
+                toolbox: {
+                    show: true,
+                    showTitle: false,
+                    feature: {
+                        saveAsImage: {
+                            show: true,
+                            title: 'Save As Image'
+                        },
+                    },
+                    tooltip: { // same as option.tooltip
+                        show: true,
+                        formatter: function (param) {
+                            return '<div>' + param.title + '</div>'; // user-defined DOM structure
+                        },
+                        backgroundColor: '#222',
+                        textStyle: {
+                            fontSize: 12,
+                        },
+                        extraCssText: 'box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);' // user-defined CSS styles
+                    }
                 },
                 legend: {},
                 grid: {
@@ -102,7 +119,7 @@
                                 type: "line",
                                 showSymbol: false,
                                 seriesLayoutBy: 'row',
-                                sampling: "lttb",
+                                sampling: 'lttb',
                                 lineStyle: { width: 1 },
                                 emphasis: { lineStyle: { width: 1 } },
                                 encode: {
@@ -125,7 +142,7 @@
         const server_url = "http://sciqlop.lpp.polytechnique.fr/cache",
             product = "amda/c1_b_gsm";
         const start_time = "2018-10-24T00:00:00";
-        const stop_time = "2018-10-25T02:05:00";
+        const stop_time = "2018-10-26T02:05:00";
 
         (async () => {
             line_plot(await get_data(server_url, product, start_time, stop_time));
