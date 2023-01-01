@@ -11,7 +11,7 @@
 <body>
     <script src="https://fastly.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 
-    <div id="chart" style="width: 1920px; height: 600px;"></div>
+    <div id="chart" style="width: 100%; height: 100%;"></div>
     <script type="module">
         import JSON5 from 'https://unpkg.com/json5@2/dist/index.min.mjs';
         function transpose(array) {
@@ -28,8 +28,8 @@
 
         function getSize() {
             return {
-                width: window.innerWidth - 100,
-                height: window.innerHeight - 200
+                width: window.innerWidth-30,
+                height: window.innerHeight-30
             }
         }
 
@@ -37,8 +37,7 @@
             let dom = document.getElementById("chart");
 
             let myChart = echarts.init(dom, null, {
-                width: 1920,
-                height: 600
+                ...getSize()
             });
 
             let opts = {
@@ -66,6 +65,8 @@
                             show: true,
                             title: 'Save As Image'
                         },
+                        restore: { show: true },
+                        dataZoom: { show: true }
                     },
                     tooltip: { // same as option.tooltip
                         show: true,
@@ -115,7 +116,7 @@
                         for (let i = 0; i < obj.labels.length; i++) {
                             opts[i] = {
                                 name: obj.labels[i],
-                                z: 0,
+                                z: i,
                                 type: "line",
                                 showSymbol: false,
                                 seriesLayoutBy: 'row',
@@ -145,8 +146,12 @@
         const stop_time = "2018-10-26T02:05:00";
 
         (async () => {
-            line_plot(await get_data(server_url, product, start_time, stop_time));
+            let myChart=line_plot(await get_data(server_url, product, start_time, stop_time));
+            window.addEventListener("resize", e => {
+                myChart.resize(getSize());
+            });
         })();
+
 
 
     </script>
